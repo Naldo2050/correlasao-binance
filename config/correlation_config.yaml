@@ -1,0 +1,158 @@
+# ============================================================================
+# CORR-WATCH SYSTEM v2.0 — Configuração Central
+# ============================================================================
+# Configuração de pares, timeframes, thresholds e regime adjustments
+# Documento de referência: CORRELAÇÃO BINANCE(copia).md — Seção 7
+# ============================================================================
+
+system:
+  name: "CORR-WATCH"
+  version: "2.0"
+  update_interval_seconds: 5        # Frequência de update da tabela
+  log_level: "INFO"
+
+# ============================================================================
+# PARES MONITORADOS
+# ============================================================================
+pairs:
+  crypto_crypto:
+    - pair: ["BTCUSDT", "ETHUSDT"]
+      expected_correlation: 0.80
+      correlation_type: "positive"
+      priority: 1
+
+    - pair: ["BTCUSDT", "SOLUSDT"]
+      expected_correlation: 0.65
+      correlation_type: "positive"
+      priority: 2
+
+    - pair: ["BTCUSDT", "BNBUSDT"]
+      expected_correlation: 0.75
+      correlation_type: "positive"
+      priority: 2
+
+    - pair: ["ETHUSDT", "SOLUSDT"]
+      expected_correlation: 0.70
+      correlation_type: "positive"
+      priority: 3
+
+  crypto_macro:
+    - pair: ["BTCUSDT", "DXY"]
+      expected_correlation: -0.50
+      correlation_type: "negative"
+      priority: 1
+      source_b: "yfinance"
+      yfinance_ticker: "DX-Y.NYB"
+
+    - pair: ["BTCUSDT", "SPX"]
+      expected_correlation: 0.40
+      correlation_type: "positive"
+      priority: 2
+      source_b: "yfinance"
+      yfinance_ticker: "^GSPC"
+
+    - pair: ["BTCUSDT", "VIX"]
+      expected_correlation: -0.35
+      correlation_type: "negative"
+      priority: 3
+      source_b: "yfinance"
+      yfinance_ticker: "^VIX"
+
+# ============================================================================
+# TIMEFRAMES MONITORADOS
+# ============================================================================
+timeframes:
+  primary: "1h"                     # Timeframe principal de decisão
+  all: ["5m", "15m", "1h", "4h", "1d"]
+  weights:
+    "5m": 0.10
+    "15m": 0.15
+    "1h": 0.30                      # Maior peso para TF principal
+    "4h": 0.25
+    "1d": 0.20
+
+# ============================================================================
+# JANELAS DE CÁLCULO (Rolling Windows)
+# ============================================================================
+windows:
+  short: 20                         # Correlação de curto prazo (ruído alto)
+  medium: 50                        # Equilíbrio ruído/sinal
+  long: 100                         # Tendência estrutural
+
+# ============================================================================
+# THRESHOLDS DE ALERTA
+# ============================================================================
+thresholds:
+  # Z-Score do Spread
+  z_score_alert: 2.0                # Z-Score para gerar alerta
+  z_score_critical: 2.5             # Z-Score para alerta crítico
+  z_score_anomaly: 3.0              # Z-Score para anomalia
+
+  # Desvio de Correlação
+  correlation_deviation_alert: 0.20       # Desvio de corr para alerta
+  correlation_deviation_critical: 0.30    # Desvio de corr para crítico
+
+  # Delta de Correlação (velocidade de mudança)
+  delta_correlation_alert: 0.15           # ΔCorr em 5 períodos
+  delta_correlation_critical: 0.25
+
+  # Cointegração
+  cointegration_pvalue_max: 0.10          # p-value máximo para cointegração
+  halflife_max_periods: 100               # Half-life máximo aceitável
+
+  # Filtros de qualidade
+  min_volume_ratio: 0.80                  # Volume mínimo vs média 20p
+  min_score_for_alert: 60                 # Score mínimo para gerar alerta
+  min_quality_score: 75                   # Quality score mínimo dos dados
+
+# ============================================================================
+# ALERTAS
+# ============================================================================
+alerts:
+  cooldown_seconds: 300              # 5 minutos entre alertas do mesmo par
+  max_simultaneous: 5                # Máximo de alertas ativos simultâneos
+  notification_channels:
+    - "console"
+    - "log"
+    - "dashboard"
+    # - "telegram"                   # Futuro
+
+# ============================================================================
+# AJUSTE POR REGIME DE MERCADO
+# ============================================================================
+regime_adjustments:
+  ranging:                           # Lateral → mais agressivo
+    z_score_alert: 1.8
+    min_score_for_alert: 50
+
+  bull:                              # Bull → padrão
+    z_score_alert: 2.0
+    min_score_for_alert: 60
+
+  bear:                              # Bear → mais conservador
+    z_score_alert: 2.5
+    min_score_for_alert: 75
+
+  high_volatility:                   # Crise → modo defensivo
+    z_score_alert: 3.0
+    min_score_for_alert: 85
+    cooldown_seconds: 900            # 15 minutos
+
+# ============================================================================
+# BINANCE API
+# ============================================================================
+binance:
+  base_url: "https://api.binance.com"
+  klines_endpoint: "/api/v3/klines"
+  ticker_endpoint: "/api/v3/ticker/price"
+  max_klines_limit: 1000
+  request_timeout_seconds: 10
+  cache_ttl_seconds: 30              # Cache de klines para evitar rate limit
+
+# ============================================================================
+# yFINANCE (Dados Macro)
+# ============================================================================
+yfinance:
+  cache_ttl_seconds: 300             # 5 min cache para dados macro
+  max_retries: 3
+  timeout_seconds: 15

@@ -1,0 +1,16 @@
+[Unit]
+Description=CORR-WATCH MVP - Sistema de Correlação
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/corr-watch-mvp
+ExecStart=/home/ubuntu/corr-watch-mvp/venv/bin/python /home/ubuntu/corr-watch-mvp/main.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/ubuntu/corr-watch-mvp/logs/system.log
+StandardError=append:/home/ubuntu/corr-watch-mvp/logs/error.log
+
+[Install]
+WantedBy=multi-user.target

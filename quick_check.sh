@@ -1,0 +1,17 @@
+#!/bin/bash
+echo "=== QUICK CHECK ==="
+echo "1. Diretório: $(pwd)"
+echo "2. Venv existe: $([ -d venv ] && echo 'SIM' || echo 'NÃO')"
+echo "3. main.py existe: $([ -f main.py ] && echo 'SIM' || echo 'NÃO')"
+echo "4. config.yaml existe: $([ -f config.yaml ] && echo 'SIM' || echo 'NÃO')"
+echo "5. logs/ existe: $([ -d logs ] && echo 'SIM' || echo 'NÃO')"
+echo "6. system.log existe: $([ -f logs/system.log ] && echo 'SIM' || echo 'NÃO')"
+echo "7. system.log linhas: $(wc -l < logs/system.log 2>/dev/null || echo '0')"
+echo "8. Processo rodando: $(ps aux | grep -c '[p]ython.*main.py')"
+echo ""
+echo "=== ÚLTIMO ERRO (journalctl) ==="
+sudo journalctl -u corr-watch -n 20 --no-pager | grep -A 5 -i "error\|exception"
+echo ""
+echo "=== TESTE DE SINTAXE ==="
+source venv/bin/activate
+python3 -m py_compile main.py && echo "✅ Sintaxe OK" || echo "❌ Erro de sintaxe"
